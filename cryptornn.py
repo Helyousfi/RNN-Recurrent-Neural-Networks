@@ -1,4 +1,5 @@
 from random import random
+from tkinter import Y
 import numpy as np
 import pandas as pd
 from pip import main
@@ -32,7 +33,35 @@ def Preprocess_dataframe(df):
             sequential_data.append([np.array(days_prev), value[-1]])
 
 
-    return random.shuffle(sequential_data)
+    random.shuffle(sequential_data)
+
+    buys = []
+    sells = []
+
+    for seq, target in sequential_data:
+        if target == 0:
+            sells.append([seq, target])
+        elif target == 1:
+            buys.append([seq, target])
+
+    lower = min(len(buys), len(sells))
+
+    buys = buys[:lower]
+    sells = sells[:lower]
+
+    sequential_data = buys + sells
+    random.shuffle(sequential_data)
+
+    X = []
+    y = []
+    for seq, target in sequential_data:
+        X.append(seq)
+        y.append(target)
+
+
+    return np.array(X), y
+
+
 
 
 #Loading the dataset and  creating the main dataframe
