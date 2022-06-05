@@ -7,8 +7,8 @@ from sklearn import preprocessing
 from collections import deque
 import time, random
 import tensorflow as tf
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Dropout, LSTM, BatchNormalization
+from keras.models import Sequential
+from keras.layers import Dense, Dropout, LSTM, BatchNormalization
 import keras
 
 #Some parameters
@@ -58,6 +58,7 @@ def Preprocess_dataframe(df):
 
 #Loading the dataset and  creating the main dataframe
 main_df = pd.DataFrame()
+
 cryptos = ["BCH-USD", "BTC-USD", "ETH-USD", "LTC-USD"]
 for crypto in cryptos:
     dataset = f"datasets/crypto_data/{crypto}.csv"
@@ -69,6 +70,7 @@ for crypto in cryptos:
 
 main_df.fillna(method="ffill", inplace = True)
 main_df.dropna(inplace = True)
+main_df_orig = main_df.copy()
 
 #Shift the ratio to predict
 main_df["future"] = main_df[f"{CRY_2_PRED}-close"].shift(-FUTURE_PRED)
@@ -93,7 +95,6 @@ validation_x, validation_y = Preprocess_dataframe(validation_main_df)
 print(f"Train data : {len(train_x)} Validation data : {len(validation_x)}")
 print(f"Train data buys : {train_y.count(0)} Train data dont buys : {train_y.count(0)}")
 print(f"Validation data buys : {validation_y.count(0)} Validation data dont buys : {validation_y.count(0)}")
-
 
 
 model = Sequential()
@@ -123,15 +124,28 @@ train_y = np.asarray(train_y)
 validation_x = np.asarray(validation_x)
 validation_y = np.asarray(validation_y)
 
-"""
-# Train model
-history = model.fit(
-    train_x, train_y,
-    batch_size=BATCH_SIZE,
-    epochs=EPOCHS,
-    validation_data=(validation_x, validation_y),
-    callbacks=[tensorboard, checkpoint],
-)
-"""
 
-model = keras.models.load_model("saved_model.pb")
+if 0:
+    # Train model
+    history = model.fit(
+        train_x, train_y,
+        batch_size=BATCH_SIZE,
+        epochs=EPOCHS,
+        validation_data=(validation_x, validation_y),
+        #callbacks=[tensorboard, checkpoint],
+    )
+
+
+with tf.device('/cpu:0'):
+    new_model = keras.models.load_model('models.h5')
+
+print(new_model.summary())
+#print(new_model.evaluate())
+
+print(validation_x[1].shape)
+pred_array_scaled = np.expand_dims(validation_x[1], axis=0) 
+#predicted = new_model.predict(validation_x)
+
+plt.plot(main_df_orig["LTC-USD-close"])
+plt.title("LTC-USD-close")
+plt.show()
